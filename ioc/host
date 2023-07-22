@@ -1,0 +1,14 @@
+[defaults]
+fact_caching=jsonfile
+
+[app]
+147.182.178.176
+
+[all:vars]
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_user=root
+
+env=dev
+
+app_domain=jconf.fredpena.dev
+app_balancer_domain=jconfbalancer.fredpena.dev

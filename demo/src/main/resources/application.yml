@@ -1,0 +1,102 @@
+# banner
+# https://manytools.org/hacker-tools/ascii-banner/
+# https://www.asciiart.eu/electronics/robots
+logging:
+  level:
+    org:
+      atmosphere: WARN
+      springframework:
+        security: TRACE
+    #        web:
+    #          client:
+    #            RestTemplate: DEBUG
+    reactor:
+      netty:
+        http:
+          client:
+            HttpClient: DEBUG
+
+server:
+#  servlet:
+#    session:
+#      timeout: 900 # Session timeout. If a duration suffix is not specified, seconds are used.
+  port: ${PORT:41485}
+  compression:
+    mime-types: application/json
+# Launch the default browser when starting the application in development mode
+vaadin:
+  launch-browser: true
+  # To improve the performance during development.
+  # For more information https://vaadin.com/docs/flow/spring/tutorial-spring-configuration.html#special-configuration-parameters
+  whitelisted-packages: com.vaadin,org.vaadin,dev.hilla,dev.fredpena.jconf
+
+spring:
+#  session:
+#    jdbc:
+#      initialize-schema: always # Database schema initialization mode.
+#      schema: classpath:org/springframework/session/jdbc/schema-mysql.sql # Path to the SQL file to use to initialize the database schema.
+#      table-name: SPRING_SESSION # Name of the database table used to store sessions.
+#    store-type: jdbc # Session store type.
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: [ classpath:db/migration ]
+    placeholderReplacement: false
+  jpa:
+    hibernate:
+      ddl-auto: update #none #update create-drop
+    #    defer-datasource-initialization: true
+    show-sql: false
+#      properties:
+#        hibernate:
+#          dialect: org.hibernate.dialect.PostgreSQLDialect
+  mustache:
+    check-template-location: false
+  #  sql:
+  #    init:
+  #      mode: always
+  # PostgreSQL Configuration.
+  datasource:
+    password: ${DB_PASSWORD:password}
+    username: ${DB_USER:root}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:jconf}
+    driver-class-name: ${DRIVER:com.mysql.cj.jdbc.Driver}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    beans:
+      cache:
+        time-to-live: "10s"
+  endpoint:
+    prometheus:
+      enabled: true
+    shutdown:
+      enabled: true
+#  prometheus:
+#    metrics:
+#      export:
+#        enabled: true
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  flyway:
+    enabled: true
+    jpa:
+      hibernate:
+        ddl-auto: update
+  devtools:
+    restart:
+      enabled: true  # Set to enable hot deployment
+      additional-paths: src/main/java # restart directory
+      quiet-period: 1s
+      poll-interval: 2s
+      log-condition-evaluation-delta: false
+
+

@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: "traefik:v2.10.3"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+#      - "--entrypoints.websecure.address=:443"
+#      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+#      - "--certificatesresolvers.letsencrypt.acme.email=me@fredpena.dev"
+#      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+#      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+#      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+#      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  db:
+    image: mysql/mysql-server:latest
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: jconf
+      MYSQL_ROOT_HOST: '%'
+    volumes:
+      - db_data:/var/lib/mysql
+
+  whoami:
+    image: traefik/whoami
+    command:
+      # It tells whoami to start listening on 2001 instead of 80
+      - --port=2001
+      - --name=iamfoo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jconf-b.rule=Host(`balancer.jconf.local`)"
+      - "traefik.http.routers.jconf-b.service=jconf-b-service"
+#      - "traefik.http.routers.jconf-b.entrypoints=websecure"
+      - "traefik.http.routers.jconf-b.entrypoints=web"
+      - "traefik.http.services.jconf-b-service.loadbalancer.server.port=2001"
+#      - "traefik.http.routers.jconf-b.tls.certresolver=letsencrypt"
+#      - "traefik.http.middlewares.onlyhttps.redirectscheme.scheme=https"
+#      - "traefik.http.middlewares.onlyhttps.redirectscheme.permanent=true"
+
+  jconfapp:
+#    image: fredpena/jconf:1.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+#    ports:
+#      - "41485:41485"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_PASSWORD=password
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jconf.rule=Host(`jconf.local`)"
+      - "traefik.http.routers.jconf.service=jconf-service"
+#      - "traefik.http.routers.jconf.entrypoints=websecure"
+      - "traefik.http.routers.jconf.entrypoints=web"
+      - "traefik.http.services.jconf-service.loadbalancer.server.port=41485"
+#      - "traefik.http.routers.jconf.tls.certresolver=letsencrypt"
+#      - "traefik.http.middlewares.onlyhttps.redirectscheme.scheme=https"
+#      - "traefik.http.middlewares.onlyhttps.redirectscheme.permanent=true"
+
+
+
+volumes:
+  db_data:
